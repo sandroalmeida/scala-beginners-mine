@@ -13,11 +13,11 @@ abstract class MyListGeneric[+A] {
 	def ++[B >: A](list: MyListGeneric[B]): MyListGeneric[B]
 }
 
-object EmptyGeneric extends MyListGeneric[Nothing] {
+case object EmptyGeneric extends MyListGeneric[Nothing] {
 	def head: Nothing = throw new NoSuchElementException
 	def tail: MyListGeneric[Nothing] = throw new NoSuchElementException
 	def isEmpty: Boolean = true
-	def add[B >: Nothing](element: B): MyListGeneric[B] = new ConsGeneric(element, EmptyGeneric)
+	def add[B >: Nothing](element: B): MyListGeneric[B] = ConsGeneric(element, EmptyGeneric)
 	def printElements: String = ""
 	def map[B](transformer: MyTransformer[Nothing, B]): MyListGeneric[B] = EmptyGeneric
 	def flatMap[B](transformer: MyTransformer[Nothing, MyListGeneric[B]]): MyListGeneric[B] = EmptyGeneric
@@ -25,19 +25,19 @@ object EmptyGeneric extends MyListGeneric[Nothing] {
 	def ++[B >: Nothing](list: MyListGeneric[B]): MyListGeneric[B] = list
 }
 
-class ConsGeneric[+A](h: A, t: MyListGeneric[A]) extends MyListGeneric[A] {
+case class ConsGeneric[+A](h: A, t: MyListGeneric[A]) extends MyListGeneric[A] {
 	def head: A = h
 	def tail: MyListGeneric[A] = t
 	def isEmpty: Boolean = false
-	def add[B >: A](element: B): MyListGeneric[B] = new ConsGeneric(element, this)
+	def add[B >: A](element: B): MyListGeneric[B] = ConsGeneric(element, this)
 	def printElements: String =
 		if(t.isEmpty) s"$h"
 		else s"$h ${t.printElements}"
 	def filter(predicate: MyPredicate[A]): MyListGeneric[A] =
-		if(predicate.test(h)) new ConsGeneric(h, t.filter(predicate))
+		if(predicate.test(h)) ConsGeneric(h, t.filter(predicate))
 		else t.filter(predicate)
 	def map[B](transformer: MyTransformer[A,B]): MyListGeneric[B] =
-		new ConsGeneric(transformer.transform(h), t.map(transformer))
+		ConsGeneric(transformer.transform(h), t.map(transformer))
 	def ++[B >: A](list: MyListGeneric[B]): MyListGeneric[B] = new ConsGeneric[B](h, t ++ list)
 	def flatMap[B](transformer: MyTransformer[A, MyListGeneric[B]]): MyListGeneric[B] =
 		transformer.transform(h) ++ t.flatMap(transformer)
@@ -52,9 +52,10 @@ trait MyTransformer[-A, B] {
 }
 
 object ListTestGeneric extends App {
-	val newListIntegers: MyListGeneric[Int] = new ConsGeneric(1, new ConsGeneric(2, new ConsGeneric(3, EmptyGeneric)))
-	val anotherListIntegers: MyListGeneric[Int] = new ConsGeneric(4, new ConsGeneric(5, EmptyGeneric))
-	val newListStrings: MyListGeneric[String] = new ConsGeneric("s1", new ConsGeneric("s2", new ConsGeneric("s3", EmptyGeneric)))
+	val newListIntegers: MyListGeneric[Int] = ConsGeneric(1, ConsGeneric(2, ConsGeneric(3, EmptyGeneric)))
+	val anotherListIntegers: MyListGeneric[Int] = ConsGeneric(4, ConsGeneric(5, EmptyGeneric))
+	val newListIntegersClone: MyListGeneric[Int] = ConsGeneric(1, ConsGeneric(2, ConsGeneric(3, EmptyGeneric)))
+	val newListStrings: MyListGeneric[String] = ConsGeneric("s1", ConsGeneric("s2", ConsGeneric("s3", EmptyGeneric)))
 	println(newListIntegers.toString)
 	println(newListStrings.toString)
 	println(newListIntegers.map(new MyTransformer[Int, Int] {
@@ -65,6 +66,7 @@ object ListTestGeneric extends App {
 	}))
 	println(newListIntegers ++ anotherListIntegers).toString
 	println(newListIntegers.flatMap(new MyTransformer[Int, MyListGeneric[Int]] {
-		override def transform(elem: Int): MyListGeneric[Int] = new ConsGeneric(elem, new ConsGeneric(elem + 1, EmptyGeneric))
+		override def transform(elem: Int): MyListGeneric[Int] = ConsGeneric(elem, ConsGeneric(elem + 1, EmptyGeneric))
 	}))
+	println(newListIntegers == newListIntegersClone)
 }
