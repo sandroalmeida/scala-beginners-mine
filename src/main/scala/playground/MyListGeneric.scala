@@ -50,15 +50,9 @@ object ListTestGeneric extends App {
 	val newListStrings: MyListGeneric[String] = ConsGeneric("s1", ConsGeneric("s2", ConsGeneric("s3", EmptyGeneric)))
 	println(newListIntegers.toString)
 	println(newListStrings.toString)
-	println(newListIntegers.map(new Function1[Int, Int] {
-		override def apply(elem: Int): Int = elem * 2
-	}).toString)
-	println(newListIntegers.filter(new Function1[Int, Boolean] {
-		override def apply(elem: Int): Boolean = elem % 2 == 0
-	}))
+	println(newListIntegers.map(x => x * 2).toString)
+	println(newListIntegers.filter(x => x % 2 == 0))
 	println(newListIntegers ++ anotherListIntegers).toString
-	println(newListIntegers.flatMap(new Function1[Int, MyListGeneric[Int]] {
-		override def apply(elem: Int): MyListGeneric[Int] = ConsGeneric(elem, ConsGeneric(elem + 1, EmptyGeneric))
-	}))
+	println(newListIntegers.flatMap(x => ConsGeneric(x, ConsGeneric(x + 1, EmptyGeneric))))
 	println(newListIntegers == newListIntegersClone)
 }
