@@ -51,7 +51,9 @@ object ListTestGeneric extends App {
 	println(newListIntegers.toString)
 	println(newListStrings.toString)
 	println(newListIntegers.map(x => x * 2).toString)
+	println(newListIntegers.map(_ * 2).toString)
 	println(newListIntegers.filter(x => x % 2 == 0))
+	println(newListIntegers.filter(_ % 2 == 0))
 	println(newListIntegers ++ anotherListIntegers).toString
 	println(newListIntegers.flatMap(x => ConsGeneric(x, ConsGeneric(x + 1, EmptyGeneric))))
 	println(newListIntegers == newListIntegersClone)
