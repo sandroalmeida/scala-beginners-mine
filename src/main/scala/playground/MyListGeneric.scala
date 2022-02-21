@@ -87,4 +87,9 @@ object ListTestGeneric extends App {
 	println(newListIntegers.zipWith(newListStrings, (a,b) => a + b).toString)
 	println(newListIntegers.zipWith(newListStrings, _ + _).toString)
 	println(newListIntegers.fold(0)(_ + _))
+	val combinations = for {
+		n <- newListIntegers
+		s <- newListStrings
+	} yield n + "-" + s
+	println(combinations)
 }
