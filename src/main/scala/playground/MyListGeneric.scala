@@ -11,6 +11,10 @@ abstract class MyListGeneric[+A] {
 	def flatMap[B](transformer: A => MyListGeneric[B]): MyListGeneric[B]
 	def filter(predicate: A => Boolean): MyListGeneric[A]
 	def ++[B >: A](list: MyListGeneric[B]): MyListGeneric[B]
+	def foreach(f: A => Unit): Unit
+	def sort(compare: (A, A) => Int): MyListGeneric[A]
+	def zipWith[B, C](list: MyListGeneric[B], zip: (A, B) => C): MyListGeneric[C]
+	def fold[B](start: B)(operator: (B, A) => B): B
 }
 
 case object EmptyGeneric extends MyListGeneric[Nothing] {
@@ -23,6 +27,12 @@ case object EmptyGeneric extends MyListGeneric[Nothing] {
 	def flatMap[B](transformer: Nothing => MyListGeneric[B]): MyListGeneric[B] = EmptyGeneric
 	def filter(predicate: Nothing => Boolean): MyListGeneric[Nothing] = EmptyGeneric
 	def ++[B >: Nothing](list: MyListGeneric[B]): MyListGeneric[B] = list
+	def foreach(f: Nothing => Unit): Unit = ()
+	def sort(compare: (Nothing, Nothing) => Int): MyListGeneric[Nothing] = EmptyGeneric
+	def zipWith[B, C](list: MyListGeneric[B], zip: (Nothing, B) => C): MyListGeneric[C] =
+		if(!list.isEmpty) throw new RuntimeException("Lists do not have same length")
+		else EmptyGeneric
+	def fold[B](start: B)(operator: (B, Nothing) => B): B = start
 }
 
 case class ConsGeneric[+A](h: A, t: MyListGeneric[A]) extends MyListGeneric[A] {
@@ -41,6 +51,21 @@ case class ConsGeneric[+A](h: A, t: MyListGeneric[A]) extends MyListGeneric[A] {
 	def ++[B >: A](list: MyListGeneric[B]): MyListGeneric[B] = new ConsGeneric[B](h, t ++ list)
 	def flatMap[B](transformer: A => MyListGeneric[B]): MyListGeneric[B] =
 		transformer(h) ++ t.flatMap(transformer)
+	def foreach(f: A => Unit): Unit =
+		f(h)
+		t.foreach(f)
+	def sort(compare: (A, A) => Int): MyListGeneric[A] =
+		def insert(x: A, sortedList: MyListGeneric[A]): MyListGeneric[A] =
+			if(sortedList.isEmpty) ConsGeneric(x, EmptyGeneric)
+			else if(compare(x, sortedList.head) <= 0) ConsGeneric(x, sortedList)
+			else ConsGeneric(sortedList.head, insert(x, sortedList.tail))
+		val sortedTail = t.sort(compare)
+		insert(h, sortedTail)
+	def zipWith[B, C](list: MyListGeneric[B], zip: (A, B) => C): MyListGeneric[C] =
+		if(list.isEmpty) throw new RuntimeException("Lists do not have same length")
+		else ConsGeneric(zip(h, list.head), t.zipWith(list.tail, zip))
+	def fold[B](start: B)(operator: (B, A) => B): B =
+		t.fold(operator(start, h))(operator)
 }
 
 object ListTestGeneric extends App {
@@ -57,4 +82,9 @@ object ListTestGeneric extends App {
 	println(newListIntegers ++ anotherListIntegers).toString
 	println(newListIntegers.flatMap(x => ConsGeneric(x, ConsGeneric(x + 1, EmptyGeneric))))
 	println(newListIntegers == newListIntegersClone)
+	newListStrings.foreach(println)
+	println(newListIntegersClone.sort((a,b) => b - a).toString)
+	println(newListIntegers.zipWith(newListStrings, (a,b) => a + b).toString)
+	println(newListIntegers.zipWith(newListStrings, _ + _).toString)
+	println(newListIntegers.fold(0)(_ + _))
 }
